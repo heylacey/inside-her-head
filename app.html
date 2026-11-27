@@ -299,9 +299,12 @@
       z-index: 2;
       opacity: 0;
       transition: opacity 1.2s ease;
-      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.55), 0 2px 20px rgba(0,0,0,0.55);
     }
     .snippet-thought.visible { opacity: 1; }
+    /* soft dark glow behind a thought that sits on bright petals */
+    .snippet-thought.halo { padding: 0.6em 0.9em; border-radius: 40%;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.22) 55%, transparent 75%); }
     .snippet-thought.fade-out { opacity: 0; transition-duration: 0.8s; }
 
     /* Counter: "1 / 6" and timer "0:10" */
@@ -819,8 +822,43 @@
         thoughtTimeoutId = thoughtFadeId = null;
       }
 
+      /* Where each moment's thought sits, so it never covers her face.
+         side: which side of the screen; top: how far down (% of the screen); width: optional max width (%).
+         On tall screens (phones) there's no side room, so thoughts sit low, above the daisies. */
+      const THOUGHT_SPOTS = [
+        { side: 'left',  top: 68 },  /* 1: she's center-left — meadow + shirt edge */
+        { side: 'right', top: 45 },  /* 2: she's on the left, looking up — open meadow */
+        { side: 'right', top: 78 },  /* 3: camera drifts right — low right stays off her face */
+        { side: 'right', top: 85, halo: true },  /* 4: interference — the daisy fills the frame, so a soft glow keeps it readable */
+        { side: 'left',  top: 70 },  /* 5: she's centered — beside her hair, over the flowers */
+        { side: 'left',  top: 22, width: 19 }   /* 6: upper left — open meadow and trees the whole clip */
+      ];
+
+      function placeThought(index) {
+        var spot = THOUGHT_SPOTS[index] || { side: 'center', top: 45 };
+        var st = snippetThought.style;
+        var aspect = window.innerWidth / window.innerHeight;
+        if (aspect < 0.9 || spot.side === 'center') {
+          snippetThought.classList.toggle('halo', !!spot.halo);
+          st.left = '50%'; st.right = 'auto';
+          st.top = 'auto'; st.bottom = '7.5rem';
+          st.transform = 'translateX(-50%)';
+          st.textAlign = 'center'; st.maxWidth = '85%';
+          return;
+        }
+        snippetThought.classList.toggle('halo', !!spot.halo);
+        st.top = spot.top + '%'; st.bottom = 'auto';
+        st.transform = 'translateY(-50%)';
+        st.maxWidth = spot.width ? spot.width + '%' : (aspect < 1.5 ? '24%' : '28%');
+        st.textAlign = spot.side;
+        if (spot.side === 'left') { st.left = '5%'; st.right = 'auto'; }
+        else { st.right = '5%'; st.left = 'auto'; }
+      }
+      window.addEventListener('resize', function () { placeThought(currentIndex); });
+
       function showThought(index, audioDuration) {
         clearThoughtTimers();
+        placeThought(index);
         snippetThought.textContent = thoughts[index] || '';
         snippetThought.classList.remove('visible', 'fade-out');
         snippetThought.offsetHeight;
