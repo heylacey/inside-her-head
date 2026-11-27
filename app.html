@@ -903,11 +903,20 @@
       }
       window.addEventListener('resize', function () { placeThought(currentIndex); });
 
+      /* Clear the current thought instantly (no fade), so jumping to another moment
+         never flashes the next thought before its cue. */
+      function hideThoughtNow() {
+        snippetThought.style.transition = 'none';
+        snippetThought.classList.remove('visible', 'fade-out');
+        snippetThought.offsetHeight;
+        snippetThought.style.transition = '';
+      }
+
       function showThought(index, audioDuration) {
         clearThoughtTimers();
+        hideThoughtNow();
         placeThought(index);
         snippetThought.textContent = thoughts[index] || '';
-        snippetThought.classList.remove('visible', 'fade-out');
         snippetThought.offsetHeight;
         var fadeOutMs = (typeof audioDuration === 'number' && audioDuration > 4)
           ? (audioDuration - 2) * 1000
@@ -990,7 +999,7 @@
         snippetCounter.textContent = (index + 1) + ' / ' + videos.length;
         progressFill.style.width = '0%';
         snippetTimer.textContent = '0:00 / —';
-        snippetThought.classList.remove('visible', 'fade-out');
+        hideThoughtNow();
         snippetThought.textContent = thoughts[index] || '';
 
         snippetVideo.play().catch(function () {});
