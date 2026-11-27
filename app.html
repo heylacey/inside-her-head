@@ -212,21 +212,22 @@
       position: relative;
       z-index: 1;
     }
-    /* Title drifts in word by word: soft blur to sharp, letters settling together */
-    .cover-title .w {
+    /* Title fades in one letter at a time (letters are wrapped by the script below) */
+    .cover-title .w { display: inline-block; }
+    .cover-title .w2 { font-style: italic; font-weight: 400; }
+    .cover-title .ch {
       display: inline-block;
+      white-space: pre;
       opacity: 0;
-      animation: titleDrift 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      filter: blur(5px);
+      animation: letterIn 1.5s cubic-bezier(0.33, 0, 0.2, 1) forwards;
       animation-play-state: paused;          /* waits until the title font has loaded */
     }
-    .cover-title .w1 { animation-delay: 1.1s; }
-    .cover-title .w2 { animation-delay: 1.75s; font-style: italic; font-weight: 400; }
-    @keyframes titleDrift {
-      0%   { opacity: 0; filter: blur(14px); letter-spacing: 0.14em; transform: translateY(10px); }
-      35%  { opacity: 0.55; filter: blur(5px); }
-      100% { opacity: 1; filter: blur(0); letter-spacing: 0.02em; transform: translateY(0); }
+    @keyframes letterIn {
+      from { opacity: 0; filter: blur(5px); }
+      to   { opacity: 1; filter: blur(0); }
     }
-    .fonts-ready .cover-title .w,
+    .fonts-ready .cover-title .ch,
     .fonts-ready .cover-story,
     .fonts-ready .cover-hint { animation-play-state: running; }
     .cover-title { margin-bottom: 1.25rem; }
@@ -243,7 +244,7 @@
       line-height: 1.7;
       position: relative;
       z-index: 1;
-      animation: softIn 1.6s ease-out 3.1s forwards;
+      animation: softIn 1.6s ease-out 3.3s forwards;
       animation-play-state: paused;
     }
     .cover-hint {
@@ -680,6 +681,18 @@
     /* Start the title reveal only once its font is ready, so the letters never swap shape mid-fade.
        Safety net: start anyway after 2.5s. */
     (function () {
+      /* wrap each title letter so it can fade in on its own, one after another */
+      var START = 1.0, STEP = 0.09, n = 0;
+      document.querySelectorAll('.cover-title .w').forEach(function (word, wi) {
+        if (wi > 0) n++;                       /* the space between words counts as a beat */
+        var text = word.textContent; word.textContent = '';
+        for (var k = 0; k < text.length; k++) {
+          var c = document.createElement('span');
+          c.className = 'ch'; c.textContent = text[k];
+          c.style.animationDelay = (START + n * STEP).toFixed(2) + 's';
+          word.appendChild(c); n++;
+        }
+      });
       var root = document.documentElement, started = false;
       function go() { if (!started) { started = true; root.classList.add('fonts-ready'); } }
       setTimeout(go, 2500);
