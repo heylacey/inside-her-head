@@ -6,7 +6,7 @@
   Stretch the element to the size you want; the experience fills it.
 */
 (function () {
-  var PAGE = 'https://heylacey.github.io/inside-her-head/';
+  var PAGE = 'https://heylacey.github.io/inside-her-head/walk/';
 
   class InsideHerHead extends HTMLElement {
     connectedCallback() {
